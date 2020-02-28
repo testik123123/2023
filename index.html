@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Ava.City 2.0</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+</head>
+<body style="font-family: 'Roboto', sans-serif;">
+    {% if not token %}<form method="post" action="/login">
+        <table>
+            <tr>
+                <td><label for="loginField">Логин</label></td>
+                <td><input id="loginField" type="text" name="login" required></td>
+            </tr>
+            <tr>
+                <td><label for="passwordField">Пароль</label></td>
+                <td><input id="passwordField" type="password" name="password" required></td>
+            </tr>
+            <tr>
+                <td colspan="2" style="text-align: center"><input type="submit" value="Войти"></td>
+            </tr>
+        </table>
+    </form>
+    <p><a href="/register">Зарегистрироваться</a></p>{% else %}<input id="clickMe" type="button" value="Начать игру" onclick="start();"/>
+    <a style="display: none;" id="flash" href="https://get.adobe.com/flashplayer">Включить Flash</a>
+    <div id="flashContent"></div>
+    <br>
+    <a href="/logout">Выйти</a>
+    <script>
+        function start(){
+            document.getElementById('clickMe').style.display = "none";
+            if (swfobject.getFlashPlayerVersion().major == 0){
+                document.getElementById('flash').style.display = "block";
+                return;
+            }
+            var params = window.location.href.substring(window.location.href.indexOf('?') + 1).split('&');
+            var vars = {};
+            for (var i = 0; i < params.length; i++) {
+                vars[params[i].split('=')[0]] = params[i].split('=')[1];
+            }
+            vars['config'] = '/appconfig.xml';
+            vars['versions'] = '/files/versions.json?{{ update_time }}';
+            vars['appSwf'] = '/files/pnz-city.swf?{{ update_time }}';
+            if (vars['hash']) {
+                var hashParams = vars['hash'].split('-');
+                if (hashParams[0] == '#nav') {
+                    vars['nav'] = hashParams[1];
+                } else if (hashParams[0] == '#ref') {
+                    var splitHashParams = hashParams[1].split('%26');
+                    for (var j = 0; j < splitHashParams.length; j++) {
+                        var keys = splitHashParams[j].split('%3D');
+                        if (keys.length == 2 && keys[0] == 'key') {
+                            vars['referrer'] = "wall-" + keys[1];
+                        }
+                    }
+                }
+            }
+            var flashVars = [];
+            for (var variable in vars) {
+                flashVars.push(variable + '=' + vars[variable]);
+            }
+            flashVars.push("auth_key={{ token }}");
+            flashVars.push("access_token={{ uid }}_{{ token }}");
+            flashVars.push("viewer_id={{ uid }}");
+            flashVars.push("user_id={{ uid }}");
+            flashVars.push("api_settings=263");
+            flashVars.push("is_app_user=1");
+            var params = {
+                flashvars: flashVars.join("&"),
+                allowfullscreen: "true",
+                allowscriptaccess: "always",
+                allowFullScreenInteractive: "true",
+                allownetworking: "all",
+                wmode: "transparent"
+            };
+            var el = document.getElementById("flashContent");
+            swfobject.embedSWF("/files/pnz-city-container.swf", el, 1280, 720, 10, null, null, params, {name: "flashContent"});
+            initVK();
+        }
+        function initVK() {
+            VK.init(function(){},
+                    function(){},
+            "5.53");
+        }
+    </script>
+    <script type="text/javascript" src="/files/swfobject.js"></script>
+    <script type="text/javascript" src="/files/openapi.js?{{ update_time }}"></script>
+    <script type="text/javascript" src="/files/xd_connection.js?{{ update_time }}"></script>{% endif %}
+</body>
+</html>
